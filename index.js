@@ -44,11 +44,11 @@ const authenticateToken = (request, response, next) => {
   if (authHeader !== undefined) {
     jwtToken = authHeader.split(" ")[1];
     if (!jwtToken) {
-      response.status(401).send("Unauthorized Access Token");
+      response.status(401).json("Unauthorized Access Token");
     } else {
       jwt.verify(jwtToken, "MY_SECRET_TOKEN", async (error, payload) => {
         if (error) {
-          response.status(403).send("Invalid Token");
+          response.status(403).json("Invalid Token");
         } else {
           request.email = payload.email;
           next();
@@ -56,7 +56,7 @@ const authenticateToken = (request, response, next) => {
       });
     }
   } else {
-    response.status(401).send("Authorization header missing");
+    response.status(401).json("Authorization header missing");
   }
 };
 
@@ -78,14 +78,14 @@ server_instance.post("/user_registration", async (request, response) => {
 
       response
         .status(400)
-        .send(
+        .json(
           "User all details are mandatory to give such as user name, email, password in valid format...!"
         );
     } else {
       const { error } = checkUserRegistration.validate(checkUserDetail);
       if (error) {
         console.log(`${error.details[0].message}`);
-        response.status(400).send(`${error.details[0].message}`);
+        response.status(400).json(`${error.details[0].message}`);
       } else {
         const isUserExistQuery = `SELECT * FROM user WHERE email = ?`;
         const dbUser = await dataBase.get(isUserExistQuery, [email]);
@@ -100,16 +100,16 @@ server_instance.post("/user_registration", async (request, response) => {
           ]);
           response
             .status(200)
-            .send(`${email} as a user ${userName} created successfully`);
+            .json(`${email} as a user ${userName} created successfully`);
           console.log(`${email} as a user ${userName} created successfully`);
         } else {
-          response.status(400).send(`User ${email} is already exist`);
+          response.status(400).json(`User ${email} is already exist`);
           console.log(`User ${email} is already exist`);
         }
       }
     }
   } catch (error) {
-    response.status(500).send(`Error Message: ${error.message}`);
+    response.status(500).json(`Error Message: ${error.message}`);
   }
 });
 
@@ -121,14 +121,14 @@ server_instance.post("/user_login", async (request, response) => {
     if (!email || !password) {
       response
         .status(400)
-        .send(
+        .json(
           "Valid email and password both are mandatory to give for user login..!"
         );
     } else {
       const { error } = checkLoginUserData.validate(userLogInData);
       if (error) {
         console.log(`${error.details[0].message}`);
-        response.status(400).send(`${error.details[0].message}`);
+        response.status(400).json(`${error.details[0].message}`);
       } else {
         const checkUserLoginQuery = `SELECT * FROM user WHERE email = ?`;
         const checkUserLogin = await dataBase.get(checkUserLoginQuery, [email]);
@@ -146,16 +146,16 @@ server_instance.post("/user_login", async (request, response) => {
             const payload = { email: email };
             const jwtToken = jwt.sign(payload, "MY_SECRET_TOKEN");
             const tokenDetail = { jwt_token: jwtToken };
-            response.status(200).send(tokenDetail);
+            response.status(200).json(tokenDetail);
             console.log(tokenDetail);
           } else {
-            response.status(400).send("Invalid login password");
+            response.status(400).json("Invalid login password");
           }
         }
       }
     }
   } catch (error) {
-    response.status(500).send(`Error while Login: ${error.message}`);
+    response.status(500).json(`Error while Login: ${error.message}`);
     console.log(`Error while Login: ${error.message}`);
   }
 });
@@ -171,18 +171,18 @@ server_instance.get(
       const getUserData = await dataBase.get(getUserDataQuery, [email]);
 
       if (getUserData) {
-        response.status(200).send({
+        response.status(200).json({
           user_detail: {
             name: getUserData.user_name,
             email: getUserData.email,
           },
         });
       } else {
-        response.status(404).send({ error: "User not found" });
+        response.status(404).json({ error: "User not found" });
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
-      response.status(500).send(`Error-message: ${error.message}`);
+      response.status(500).json(`Error-message: ${error.message}`);
     }
   }
 );
@@ -198,10 +198,10 @@ server_instance.post(
       const getUserDataQuery = `SELECT * FROM user WHERE email = ?;`;
       const getUserData = await dataBase.get(getUserDataQuery, [email]);
       if (!getUserData) {
-        response.status(404).send("User not found..!");
+        response.status(404).json("User not found..!");
       } else {
         if (!taskName || !description || !dueDate || !status || !priority) {
-          response.status(400).send("All fields are mandatory to fill..!");
+          response.status(400).json("All fields are mandatory to fill..!");
           console.log("All fields are mandatory to fill..!");
         } else {
           const taskData = {
@@ -212,7 +212,7 @@ server_instance.post(
           const { error } = checkUserTask.validate(taskData);
           if (error) {
             console.log(`${error.details[0].message}`);
-            response.status(400).send(`${error.details[0].message}`);
+            response.status(400).json(`${error.details[0].message}`);
           } else {
             const createTaskQuery = `INSERT INTO task(user_id, task_name, description, due_date, status, priority) VALUES (?,?,?,?,?,?);`;
             const createTask = await dataBase.run(createTaskQuery, [
@@ -225,13 +225,13 @@ server_instance.post(
             ]);
             response
               .status(200)
-              .send(`Task created successfully of ${getUserData.user_name}`);
+              .json(`Task created successfully of ${getUserData.user_name}`);
           }
         }
       }
     } catch (error) {
       console.log(`Error-message: ${error.message}`);
-      response.status(500).send(`Error-message: ${error.message}`);
+      response.status(500).json(`Error-message: ${error.message}`);
     }
   }
 );
@@ -245,7 +245,7 @@ server_instance.get(
     const { taskId } = request.params;
     try {
       if (!taskId) {
-        response.status(400).send("missing task id of path parameter..!");
+        response.status(400).json("missing task id of path parameter..!");
         console.log("missing task id of path parameter..!");
       } else {
         const getTaskDataQuery =
@@ -257,16 +257,16 @@ server_instance.get(
         if (!getTaskData) {
           response
             .status(400)
-            .send(
+            .json(
               `Task is not found in the server of database regarding id ${taskId}`
             );
         } else {
-          response.status(200).send(getTaskData);
+          response.status(200).json(getTaskData);
         }
       }
     } catch (error) {
       console.log(`Error-message: ${error.message}`);
-      response.status(500).send(`Error-message: ${error.message}`);
+      response.status(500).json(`Error-message: ${error.message}`);
     }
   }
 );
@@ -284,7 +284,7 @@ server_instance.delete(
         console.log("Missing task ID in path parameter..!");
         return response
           .status(400)
-          .send("Missing task ID in path parameter..!");
+          .json("Missing task ID in path parameter..!");
       }
 
       const deleteTaskQuery = `
@@ -299,14 +299,14 @@ server_instance.delete(
       // SQLite3's `run` doesn't return affected rows directly.
       if (result.changes === 0) {
         console.log("No task found or unauthorized deletion attempt.");
-        return response.status(404).send("Task not found or unauthorized.");
+        return response.status(404).json("Task not found or unauthorized.");
       }
 
       console.log("Task deleted successfully..!");
-      response.status(200).send("Task deleted successfully..!");
+      response.status(200).json("Task deleted successfully..!");
     } catch (error) {
       console.error(`Error-message: ${error.message}`);
-      response.status(500).send(`Error-message: ${error.message}`);
+      response.status(500).json(`Error-message: ${error.message}`);
     }
   }
 );
@@ -330,14 +330,14 @@ server_instance.delete(
 
       if (result.changes === 0) {
         console.log("No tasks found for the user.");
-        return response.status(404).send("No tasks found for the user.");
+        return response.status(404).json("No tasks found for the user.");
       }
 
       console.log("All tasks deleted successfully.");
-      response.status(200).send("All tasks deleted successfully.");
+      response.status(200).json("All tasks deleted successfully.");
     } catch (error) {
       console.error(`Error-message: ${error.message}`);
-      response.status(500).send(`Error-message: ${error.message}`);
+      response.status(500).json(`Error-message: ${error.message}`);
     }
   }
 );
@@ -352,7 +352,7 @@ server_instance.put(
     try {
       if (!taskId) {
         console.log("Missing task ID in path parameter..!");
-        response.status(400).send("Missing task ID in path parameter..!");
+        response.status(400).json("Missing task ID in path parameter..!");
       } else {
         const getTaskDataQuery = `SELECT * FROM user INNER JOIN task ON user.id = task.user_id WHERE task.id = ? AND user.email = ?;`;
         const getTaskData = await dataBase.get(getTaskDataQuery, [
@@ -362,7 +362,7 @@ server_instance.put(
         console.log(getTaskData);
 
         if (!getTaskData) {
-          response.status(404).send({ error: "Task not found" });
+          response.status(404).json({ error: "Task not found" });
         } else {
           const {
             taskName = getTaskData.task_name,
@@ -379,7 +379,7 @@ server_instance.put(
           const { error } = checkUserTask.validate(taskData);
           if (error) {
             console.log(`${error.details[0].message}`);
-            response.status(400).send(`${error.details[0].message}`);
+            response.status(400).json(`${error.details[0].message}`);
           } else {
             const editTaskQuery =
               "UPDATE task SET task_name = ?, description = ?, due_date = ?, status = ?, priority = ? WHERE id = ? AND user_id = (SELECT id FROM user WHERE email = ?);";
@@ -393,15 +393,15 @@ server_instance.put(
               email,
             ]);
             if (editTask.changes === 0) {
-              response.status(404).send("Task not found or no changes made.");
+              response.status(404).json("Task not found or no changes made.");
             } else {
-              response.status(200).send("Task updated successfully.");
+              response.status(200).json("Task updated successfully.");
             }
           }
         }
       }
     } catch (error) {
-      response.status(500).send(`Error: ${error.message}`);
+      response.status(500).json(`Error: ${error.message}`);
       console.log(`Error: ${error.message}`);
     }
   }
@@ -421,7 +421,7 @@ server_instance.get(
         const { error } = checkStatus.validate(taskStatus);
         if (error) {
           console.error("Validation Error:", error.details[0].message);
-          return response.status(400).send(error.details[0].message);
+          return response.status(400).json(error.details[0].message);
         }
       }
 
@@ -465,13 +465,15 @@ server_instance.get(
       const getAllTaskList = await dataBase.all(getTaskListQuery, queryParam);
 
       if (!getAllTaskList || getAllTaskList.length === 0) {
-        return response.status(200).send("No tasks found.");
+        return response.status(200).json("No tasks found.");
       }
 
       response.status(200).json(getAllTaskList);
     } catch (error) {
       console.error("Database query error:", error.message);
-      response.status(500).send(`Server Error: ${error.message}`);
+      response.status(500).json(`Server Error: ${error.message}`);
     }
   }
 );
+ 
+
